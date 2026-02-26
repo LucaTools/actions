@@ -1,0 +1,27 @@
+name: Install tools
+description: >
+  Install the tools declared in a Luca spec file and add them to
+  GITHUB_PATH so they are available to subsequent steps.
+
+branding:
+  icon: package
+  color: blue
+
+inputs:
+  spec:
+    description: >
+      Path to the Luca spec file (relative to the workspace root).
+      Defaults to "Lucafile", which resolves to ./Lucafile in the
+      current working directory — the convention documented in the
+      Luca CLI.
+    required: false
+    default: Lucafile
+
+runs:
+  using: composite
+  steps:
+    - name: Install tools
+      shell: bash
+      run: |
+        luca install --spec=${{ inputs.spec }}
+        echo "$PWD/.luca/active" >> $GITHUB_PATH

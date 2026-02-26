@@ -1,0 +1,52 @@
+name: Release
+
+# Triggered when a version tag is pushed (e.g. git tag v1.2.3 && git push --tags).
+# The workflow runs the test suite first, then creates a GitHub Release and
+# force-updates the corresponding floating major tag (e.g. v1) so that callers
+# pinned to `@v1` always get the latest patch within that major version.
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  test:
+    name: Run tests before release
+    uses: ./.github/workflows/test.yml
+
+  release:
+    name: Create GitHub Release
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
+
+  update-major-tag:
+    name: Update floating major tag
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Force-update major tag
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          MAJOR="${TAG%%.*}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -f "${MAJOR}"
+          git push origin "${MAJOR}" --force

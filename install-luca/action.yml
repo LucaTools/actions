@@ -1,0 +1,28 @@
+name: Install Luca
+description: Install the Luca CLI tool manager on the runner.
+
+branding:
+  icon: download-cloud
+  color: blue
+
+inputs:
+  version:
+    description: >
+      The version of Luca to install (e.g. "1.2.3"). Omit to install the
+      latest release. When provided, a `.luca-version` file is written
+      before the install script runs so the existing version-detection
+      logic in the install script picks it up automatically.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Write .luca-version (when version is pinned)
+      if: inputs.version != ''
+      shell: bash
+      run: echo "${{ inputs.version }}" > .luca-version
+
+    - name: Install Luca
+      shell: bash
+      run: curl -fsSL https://luca.tools/install.sh | bash

@@ -1,0 +1,70 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-install-luca:
+    name: Test install-luca
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Luca (latest)
+        uses: ./install-luca
+
+      - name: Verify luca is available
+        run: luca --version
+
+  test-install-luca-pinned:
+    name: Test install-luca (pinned version)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Clean up any .luca-version left by a previous run
+      - name: Remove .luca-version if present
+        run: rm -f .luca-version
+
+      - name: Install Luca (pinned)
+        uses: ./install-luca
+        with:
+          version: "0.5.0"
+
+      - name: Verify pinned version is installed
+        run: |
+          luca --version
+          INSTALLED=$(luca --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ "$INSTALLED" != "0.5.0" ]; then
+            echo "Expected 0.5.0, got $INSTALLED"
+            exit 1
+          fi
+
+  test-install-tools:
+    name: Test install-tools
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Luca
+        uses: ./install-luca
+
+      # Write a minimal Lucafile that installs a small, publicly available tool.
+      - name: Create fixture Lucafile
+        run: |
+          cat > Lucafile <<'EOF'
+          ---
+          tools:
+            - name: Tuist
+              version: 4.80.0
+              url: https://github.com/tuist/tuist/releases/download/4.80.0/tuist.zip
+          EOF
+
+      - name: Install tools
+        uses: ./install-tools
+
+      - name: Verify tool is on PATH
+        run: tuist version
