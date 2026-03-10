@@ -52,10 +52,15 @@ jobs:
           cat > Lucafile <<'EOF'
           ---
           tools:
+            - name: SwiftLint
+              binaryPath: SwiftLintBinary.artifactbundle/swiftlint-0.61.0-macos/bin/swiftlint
+              version: 0.61.0
+              url: https://github.com/realm/SwiftLint/releases/download/0.61.0/SwiftLintBinary.artifactbundle.zip
             - name: Tuist
               binaryPath: tuist
               version: 4.80.0
               url: https://github.com/tuist/tuist/releases/download/4.80.0/tuist.zip
+            
           EOF
 
       - name: Setup Luca (with tools)
@@ -63,5 +68,32 @@ jobs:
         with:
           spec: Lucafile
 
-      - name: Verify tool is on PATH
-        run: tuist version
+      - name: Verify tools are on PATH
+        run: |
+          TUIST_VERSION=$(tuist version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ "$TUIST_VERSION" != "4.80.0" ]; then
+            echo "Expected tuist 4.80.0, got $TUIST_VERSION"
+            exit 1
+          fi
+
+          SWIFTLINT_VERSION=$(swiftlint version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ "$SWIFTLINT_VERSION" != "0.61.0" ]; then
+            echo "Expected swiftlint 0.61.0, got $SWIFTLINT_VERSION"
+            exit 1
+          fi
+
+      - name: Verify tools are symlinked to tools directory
+        run: |
+          LINK=$(readlink .luca/tools/tuist)
+          EXPECTED="$HOME/.luca/tools/Tuist/4.80.0/tuist"
+          if [ "$LINK" != "$EXPECTED" ]; then
+            echo "Expected symlink target '$EXPECTED', got '$LINK'"
+            exit 1
+          fi
+
+          LINK=$(readlink .luca/tools/swiftlint)
+          EXPECTED="$HOME/.luca/tools/SwiftLint/0.61.0/SwiftLintBinary.artifactbundle/swiftlint-0.61.0-macos/bin/swiftlint"
+          if [ "$LINK" != "$EXPECTED" ]; then
+            echo "Expected symlink target '$EXPECTED', got '$LINK'"
+            exit 1
+          fi
