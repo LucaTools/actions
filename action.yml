@@ -32,6 +32,8 @@ runs:
 
     - name: Install Luca CLI
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: curl -fsSL https://luca.tools/install.sh | bash
 
     - name: Install tools
