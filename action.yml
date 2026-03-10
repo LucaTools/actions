@@ -39,4 +39,4 @@ runs:
       shell: bash
       run: |
         luca install --spec=${{ inputs.spec }}
-        echo "$PWD/.luca/active" >> $GITHUB_PATH
+        echo "$PWD/.luca/tools" >> $GITHUB_PATH
