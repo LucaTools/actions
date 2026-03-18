@@ -33,6 +33,17 @@ This action is also published on the [GitHub Actions Marketplace](https://github
     spec: Lucafile
 ```
 
+### GitHub Enterprise
+
+On GitHub Enterprise the built-in `github.token` is scoped to your enterprise instance and cannot authenticate against the github.com API. Pass a github.com Personal Access Token to avoid rate limiting:
+
+```yaml
+- uses: LucaTools/setup-luca@v1
+  with:
+    spec: Lucafile
+    github_token: ${{ secrets.GH_COM_TOKEN }}
+```
+
 ---
 
 ## Inputs
@@ -41,6 +52,7 @@ This action is also published on the [GitHub Actions Marketplace](https://github
 |-------|-------------|----------|---------|
 | `version` | Luca version to install (e.g. `"1.2.3"`). Omit to use the latest release. | No | `""` (latest) |
 | `spec` | Path to the Luca spec file, relative to the workspace root. Omit to skip tool installation. | No | `""` (skip) |
+| `github_token` | GitHub token for authenticating against the github.com API when downloading the Luca CLI. Defaults to the built-in `github.token`, which works on github.com. On GitHub Enterprise, pass a github.com PAT to avoid API rate limiting. | No | `""` (uses `github.token`) |
 
 When `spec` is provided, all tools listed in the spec file are added to `PATH` and available by name in subsequent steps.
 

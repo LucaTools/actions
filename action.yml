@@ -21,6 +21,14 @@ inputs:
       are installed and added to PATH. Omit to skip tool installation.
     required: false
     default: ""
+  github_token:
+    description: >
+      A GitHub token used to authenticate against the github.com API when
+      downloading the Luca CLI. Defaults to the built-in `github.token`,
+      which works on github.com. When running on GitHub Enterprise, pass a
+      github.com Personal Access Token here to avoid API rate limiting.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -33,7 +41,7 @@ runs:
     - name: Install Luca CLI
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ inputs.github_token || github.token }}
       run: curl -fsSL https://luca.tools/install.sh | bash
 
     - name: Install tools
