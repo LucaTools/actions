@@ -10,8 +10,11 @@ on:
 
 jobs:
   test-install-latest:
-    name: Install latest Luca CLI
-    runs-on: macos-latest
+    name: Install latest Luca CLI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -22,8 +25,11 @@ jobs:
         run: luca --version
 
   test-install-pinned:
-    name: Install pinned Luca CLI
-    runs-on: macos-latest
+    name: Install pinned Luca CLI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -41,8 +47,8 @@ jobs:
             exit 1
           fi
 
-  test-install-tools:
-    name: Install Luca CLI and tools
+  test-install-tools-macos:
+    name: Install Luca CLI and tools (macOS)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +100,47 @@ jobs:
 
           LINK=$(readlink .luca/tools/swiftlint)
           EXPECTED="$HOME/.luca/tools/SwiftLint/0.61.0/SwiftLintBinary.artifactbundle/swiftlint-0.61.0-macos/bin/swiftlint"
+          if [ "$LINK" != "$EXPECTED" ]; then
+            echo "Expected symlink target '$EXPECTED', got '$LINK'"
+            exit 1
+          fi
+
+  test-install-tools-linux:
+    name: Install Luca CLI and tools (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Write a minimal Lucafile that installs a small, publicly available tool.
+      - name: Create fixture Lucafile
+        run: |
+          cat > Lucafile <<'EOF'
+          ---
+          tools:
+            - name: yq
+              desiredBinaryName: yq
+              version: 4.52.4
+              url: https://github.com/mikefarah/yq/releases/download/v4.52.4/yq_linux_amd64
+
+          EOF
+
+      - name: Setup Luca (with tools)
+        uses: ./
+        with:
+          spec: Lucafile
+
+      - name: Verify tools are on PATH
+        run: |
+          YQ_VERSION=$(yq --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ "$YQ_VERSION" != "4.52.4" ]; then
+            echo "Expected yq 4.52.4, got $YQ_VERSION"
+            exit 1
+          fi
+
+      - name: Verify tools are symlinked to tools directory
+        run: |
+          LINK=$(readlink .luca/tools/yq)
+          EXPECTED="$HOME/.luca/tools/yq/4.52.4/yq"
           if [ "$LINK" != "$EXPECTED" ]; then
             echo "Expected symlink target '$EXPECTED', got '$LINK'"
             exit 1
