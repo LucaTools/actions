@@ -42,7 +42,7 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github_token || github.token }}
-      run: curl -fsSL https://luca.tools/install.sh | bash
+      run: curl -fsSL https://luca.tools/install.sh | INSTALL_DIR=/usr/local/bin bash
 
     - name: Install tools
       if: inputs.spec != ''
