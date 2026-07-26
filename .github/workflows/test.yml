@@ -67,7 +67,8 @@ jobs:
               binaryPath: tuist
               version: 4.80.0
               url: https://github.com/tuist/tuist/releases/download/4.80.0/tuist.zip
-            
+              ignoreUnsafeArchiveEntries: true
+
           EOF
 
       - name: Setup Luca (with tools)
