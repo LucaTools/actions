@@ -21,6 +21,12 @@ inputs:
       are installed and added to PATH. Omit to skip tool installation.
     required: false
     default: ""
+  only_tools:
+    description: >
+      When true (the default), passes `--only-tools` to `luca install`.
+      Set to false to install both tools and skills defined in the spec file.
+    required: false
+    default: "true"
   github_token:
     description: >
       A GitHub token used to authenticate against the github.com API when
@@ -48,5 +54,5 @@ runs:
       if: inputs.spec != ''
       shell: bash
       run: |
-        luca install --spec=${{ inputs.spec }}
+        luca install --spec=${{ inputs.spec }}${{ inputs.only_tools == 'true' && ' --only-tools' || '' }}
         echo "$GITHUB_WORKSPACE/.luca/tools" >> $GITHUB_PATH
