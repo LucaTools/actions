@@ -146,3 +146,107 @@ jobs:
             echo "Expected symlink target '$EXPECTED', got '$LINK'"
             exit 1
           fi
+
+  test-only-tools-skips-skills:
+    name: only_tools=true installs tools but skips skills
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Write a Lucafile that defines both a tool and a skill.
+      - name: Create fixture Lucafile
+        run: |
+          cat > Lucafile <<'EOF'
+          ---
+          tools:
+            - name: yq
+              desiredBinaryName: yq
+              version: 4.52.4
+              url: https://github.com/mikefarah/yq/releases/download/v4.52.4/yq_darwin_arm64
+
+          agents:
+            - claude-code
+
+          skills:
+            - name: swift-concurrency
+              repository: AvdLee/Swift-Concurrency-Agent-Skill
+              version: 2.1.1
+
+          EOF
+
+      # only_tools defaults to "true", so --only-tools is passed to `luca install`.
+      - name: Setup Luca (only_tools default)
+        uses: ./
+        with:
+          spec: Lucafile
+
+      - name: Verify the tool was installed
+        run: |
+          YQ_VERSION=$(yq --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ "$YQ_VERSION" != "4.52.4" ]; then
+            echo "Expected yq 4.52.4, got $YQ_VERSION"
+            exit 1
+          fi
+
+      - name: Verify the skill was NOT installed
+        run: |
+          if [ -e .luca/skills/swift-concurrency ]; then
+            echo ".luca/skills/swift-concurrency should not exist when only_tools=true"
+            exit 1
+          fi
+          if [ -e .claude/skills/swift-concurrency ]; then
+            echo ".claude/skills/swift-concurrency should not exist when only_tools=true"
+            exit 1
+          fi
+
+  test-only-tools-false-installs-skills:
+    name: only_tools=false installs both tools and skills
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Write a Lucafile that defines both a tool and a skill.
+      - name: Create fixture Lucafile
+        run: |
+          cat > Lucafile <<'EOF'
+          ---
+          tools:
+            - name: yq
+              desiredBinaryName: yq
+              version: 4.52.4
+              url: https://github.com/mikefarah/yq/releases/download/v4.52.4/yq_darwin_arm64
+
+          agents:
+            - claude-code
+
+          skills:
+            - name: swift-concurrency
+              repository: AvdLee/Swift-Concurrency-Agent-Skill
+              version: 2.1.1
+
+          EOF
+
+      - name: "Setup Luca (only_tools: false)"
+        uses: ./
+        with:
+          spec: Lucafile
+          only_tools: "false"
+
+      - name: Verify the tool was installed
+        run: |
+          YQ_VERSION=$(yq --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ "$YQ_VERSION" != "4.52.4" ]; then
+            echo "Expected yq 4.52.4, got $YQ_VERSION"
+            exit 1
+          fi
+
+      - name: Verify the skill was installed
+        run: |
+          if [ ! -e .luca/skills/swift-concurrency ]; then
+            echo "Expected .luca/skills/swift-concurrency to exist"
+            exit 1
+          fi
+          if [ ! -e .claude/skills/swift-concurrency ]; then
+            echo "Expected .claude/skills/swift-concurrency to exist"
+            exit 1
+          fi
